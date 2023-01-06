@@ -1,4 +1,4 @@
-# Digital Collections API
+# NUL Digital Collections API
 
 ```elixir
 Mix.install(
@@ -13,7 +13,7 @@ Mix.install(
 )
 ```
 
-## Section
+## Smart Cell
 
 <!-- livebook:{"attrs":{"format":"json","query_body":"{\n  \"query\": {\n    \"bool\": {\n      \"must\": {\n        \"match\": {\n           \"work_type\": \"Image\"\n        }\n      }\n    }\n  },\n  \"size\": 25\n}","variable":"result"},"chunks":null,"kind":"Elixir.Nul.SmartCell","livebook_object":"smart_cell"} -->
 
@@ -25,21 +25,40 @@ result =
   )
 ```
 
+## Transforming the response
+
 ```elixir
-urls =
+data =
   result.body
   |> Map.get("data")
-  |> Enum.map(&(&1["thumbnail"] <> "?size=300"))
 
 images =
-  for {url, i} <- Enum.with_index(urls, 1) do
-    image = Kino.Markdown.new("![](#{url})")
-    label = Kino.Markdown.new("**Image #{i}**")
-    Kino.Layout.grid([image, label], boxed: true)
+  for {image, i} <- Enum.with_index(data, 1) do
+    label =
+      Kino.Markdown.new("""
+         <div style="text-align: center">
+          <p style="font-weight: bold;">#{i}/#{length(data)}</p>
+          <p>#{image["title"]}</p>
+         </div>
+      """)
+
+    link =
+      Kino.Markdown.new(
+        "[link](https://digitalcollections.library.northwestern.edu/items/#{image["id"]})"
+      )
+
+    image =
+      Kino.Markdown.new(
+        "![#{image["rights_statement"]["label"]}](#{image["thumbnail"] <> "?size=300"})"
+      )
+
+    Kino.Layout.grid([label, image, link], boxed: true)
   end
 
-Kino.Layout.grid(images, columns: 3)
+Kino.Layout.grid(images, columns: 2)
 ```
+
+## Visualizations: graphs and tables
 
 ```elixir
 alias VegaLite, as: Vl
@@ -60,6 +79,8 @@ data
 end)
 |> Kino.DataTable.new()
 ```
+
+## Neural Networks models
 
 ```elixir
 frame = Kino.Frame.new()
