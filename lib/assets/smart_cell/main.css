@@ -1,57 +1,29 @@
 .app {
   font-family: "Inter";
-
-  box-sizing: border-box;
-
-  --gray-50: #f8fafc;
-  --gray-100: #f0f5f9;
-  --gray-200: #e1e8f0;
-  --gray-300: #cad5e0;
-  --gray-400: #91a4b7;
-  --gray-500: #61758a;
-  --gray-600: #445668;
-  --gray-800: #1c2a3a;
-
-  --blue-100: #ecf0ff;
-  --blue-600: #3e64ff;
-
-  --purple-100: #B6ACD1;
-}
-
-input,
-select,
-textarea,
-button {
-  font-family: inherit;
-}
-
-.header {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: flex-start;
-  background-color: var(--purple-100);
-  padding: 8px 16px;
-  border-left: solid 1px var(--gray-300);
-  border-top: solid 1px var(--gray-300);
-  border-right: solid 1px var(--gray-300);
-  border-bottom: solid 1px var(--gray-200);
-  border-radius: 0.5rem 0.5rem 0 0;
+  align-items: center;
   gap: 16px;
-  color: var(--gray-600);
+  background-color: #e4e0ee;
+  padding: 8px 16px;
+  border: solid 1px #c2b6d6;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4E2A84;
+  text-transform: uppercase;
 }
 
 .input {
   padding: 8px 12px;
-  background-color: var(--gray-50);
+  background-color: #f8fafc;
   font-size: 0.875rem;
-  border: 1px solid var(--gray-200);
+  border: 1px solid #e1e8f0;
   border-radius: 0.5rem;
-  color: var(--gray-600);
-}
-
-.input::placeholder {
-  color: var(--gray-400);
+  color: #403758;
+  min-width: 150px;
 }
 
 .input:focus {

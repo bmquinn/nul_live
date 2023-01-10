@@ -22,15 +22,13 @@ result =
   Req.post!("https://dcapi.rdc.library.northwestern.edu/api/v2/search?as=json",
     body:
       "{\n  \"query\": {\n    \"bool\": {\n      \"must\": {\n        \"match\": {\n           \"work_type\": \"Image\"\n        }\n      }\n    }\n  },\n  \"size\": 25\n}"
-  )
+  ).body
 ```
 
 ## Transforming the response
 
 ```elixir
-data =
-  result.body
-  |> Map.get("data")
+data = Map.get(result, "data")
 
 images =
   for {image, i} <- Enum.with_index(data, 1) do

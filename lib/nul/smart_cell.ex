@@ -3,8 +3,6 @@ defmodule Nul.SmartCell do
   use Kino.JS.Live
   use Kino.SmartCell, name: "NUL Digital Collections API"
 
-  require Logger
-
   @impl true
   def init(attrs, ctx) do
     format = attrs["format"] || "json"
@@ -61,7 +59,7 @@ defmodule Nul.SmartCell do
       unquote(quoted_variable(attrs["variable"])) =
         Req.post!(unquote(url),
           body: unquote(attrs["query_body"])
-        )
+        ).body
     end
     |> Kino.SmartCell.quoted_to_string()
   end
