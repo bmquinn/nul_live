@@ -53,7 +53,7 @@ defmodule Nul.SmartCell do
 
   @impl true
   def to_source(attrs) do
-    url = "https://dcapi.rdc.library.northwestern.edu/api/v2/search?as=#{attrs["format"]}"
+    url = "https://api.dc.library.northwestern.edu/api/v2/search?as=#{attrs["format"]}"
 
     quote do
       unquote(quoted_variable(attrs["variable"])) =

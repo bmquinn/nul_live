@@ -6,7 +6,7 @@ Mix.install(
     {:nul, github: "bmquinn/nul_live"},
     {:vega_lite, "~> 0.1.6"},
     {:kino_vega_lite, "~> 0.1.7"},
-    {:kino_bumblebee, "~> 0.1.0"},
+    {:kino_bumblebee, "~> 0.1.4"},
     {:exla, "~> 0.4.1"}
   ],
   config: [nx: [default_backend: EXLA.Backend]]
@@ -19,7 +19,7 @@ Mix.install(
 
 ```elixir
 result =
-  Req.post!("https://dcapi.rdc.library.northwestern.edu/api/v2/search?as=json",
+  Req.post!("https://api.dc.library.northwestern.edu/api/v2/search?as=json",
     body:
       "{\n  \"query\": {\n    \"bool\": {\n      \"must\": {\n        \"match\": {\n           \"work_type\": \"Image\"\n        }\n      }\n    }\n  },\n  \"size\": 25\n}"
   ).body
@@ -28,14 +28,14 @@ result =
 ## Transforming the response
 
 ```elixir
-data = Map.get(result, "data")
+dataset = Map.get(result, "data")
 
 images =
-  for {image, i} <- Enum.with_index(data, 1) do
+  for {image, i} <- Enum.with_index(dataset, 1) do
     label =
       Kino.Markdown.new("""
          <div style="text-align: center">
-          <p style="font-weight: bold;">#{i}/#{length(data)}</p>
+          <p style="font-weight: bold;">#{i}/#{length(dataset)}</p>
           <p>#{image["title"]}</p>
          </div>
       """)
@@ -59,30 +59,24 @@ Kino.Layout.grid(images, columns: 2)
 ## Visualizations: graphs and tables
 
 ```elixir
-alias VegaLite, as: Vl
-
-data = Map.get(result.body, "data")
-
-Vl.new()
-|> Vl.data_from_values(data)
-|> Vl.mark(:bar)
-|> Vl.encode_field(:x, "preservation_level")
-|> Vl.encode(:y, aggregate: :count)
-```
-
-```elixir
-data
+dataset
 |> Enum.map(fn record ->
   Map.take(record, ~w|id create_date description|)
 end)
 |> Kino.DataTable.new()
 ```
 
-## Neural Networks models
-
 ```elixir
-frame = Kino.Frame.new()
+alias VegaLite, as: Vl
+
+Vl.new(width: 400, height: 400)
+|> Vl.data_from_values(dataset)
+|> Vl.mark(:bar)
+|> Vl.encode_field(:x, "preservation_level")
+|> Vl.encode(:y, aggregate: :count)
 ```
+
+## Neural Networks models
 
 ```elixir
 {:ok, model_info} = Bumblebee.load_model({:hf, "dslim/bert-base-NER"}, log_params_diff: false)
@@ -96,10 +90,45 @@ serving =
     defn_options: [compiler: EXLA]
   )
 
-data
-|> Enum.flat_map(&Map.get(&1, "description"))
-|> Enum.each(fn text ->
-  output = Nx.Serving.run(serving, text)
-  Kino.Frame.append(frame, Kino.Bumblebee.HighlightedText.new(text, output.entities))
+select_input =
+  Kino.Input.select("Choose field:",
+    multivalued_description: "Description",
+    singular_title: "Title",
+    multivalued_alternate_title: "Alternate Title"
+  )
+
+form = Kino.Control.form([selected: select_input], submit: "Run")
+frame = Kino.Frame.new()
+
+form
+|> Kino.Control.stream()
+|> Kino.listen(fn %{data: %{selected: selected}} ->
+  selected = Atom.to_string(selected)
+
+  texts =
+    case selected do
+      "singular_" <> field ->
+        dataset
+        |> Enum.map(&Map.get(&1, field))
+
+      "multivalued_" <> field ->
+        dataset
+        |> Enum.flat_map(&Map.get(&1, field))
+    end
+
+  case texts do
+    [] ->
+      Kino.Frame.render(frame, Kino.Markdown.new("No values for that field"))
+
+    _ ->
+      Kino.Frame.render(frame, Kino.Markdown.new(""))
+
+      Enum.each(texts, fn text ->
+        output = Nx.Serving.run(serving, text)
+        Kino.Frame.append(frame, Kino.Bumblebee.HighlightedText.new(text, output.entities))
+      end)
+  end
 end)
+
+Kino.Layout.grid([form, frame], boxed: true, gap: 16)
 ```
